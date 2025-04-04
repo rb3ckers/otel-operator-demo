@@ -1,0 +1,44 @@
+# Add image pull secret for private registries
+imagePullSecrets: []
+manager:
+  # Customize repositories for air-gapped setups:
+  image:
+    repository: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
+    tag: ""
+  collectorImage:
+    repository:
+      otel/opentelemetry-collector-k8s
+    tag: 0.123.0
+  opampBridgeImage:
+    repository: ""
+    tag: ""
+  targetAllocatorImage:
+    repository: ""
+    tag: ""
+  autoInstrumentationImage:
+    java:
+      repository: ""
+      tag: ""
+    nodejs:
+      repository: ""
+      tag: ""
+    python:
+      repository: ""
+      tag: ""
+    dotnet:
+      repository: ""
+      tag: ""
+    apacheHttpd:
+      repository: ""
+      tag: ""
+    # The Go instrumentation support in the operator is disabled by default.
+    # To enable it, use the operator.autoinstrumentation.go feature gate.
+    go:
+      repository: ""
+      tag: ""
+      
+admissionWebhooks:
+  certManager:
+    enabled: false
+  autoGenerateCert:
+    enabled: true

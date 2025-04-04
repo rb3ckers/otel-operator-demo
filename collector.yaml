@@ -1,0 +1,85 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-collector
+  namespace: suse-observability
+spec:
+  mode: deployment
+  envFrom:
+  - secretRef:
+      name: open-telemetry-collector
+  # optional service-account for pulling from private registries
+  # serviceAccount: otel-collector
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      prometheus:
+        config:
+          scrape_configs:
+          - job_name: opentelemetry-collector
+            scrape_interval: 10s
+            static_configs:
+            - targets:
+              - ${env:MY_POD_IP}:8888
+    extensions:
+      health_check:
+        endpoint: ${env:MY_POD_IP}:13133
+      bearertokenauth:
+        scheme: SUSEObservability
+        token: "${env:API_KEY}"
+    exporters:
+      debug: {}
+      otlp/stackstate:
+        auth:
+          authenticator: bearertokenauth
+        endpoint: https://<suse-observability>:443
+    processors:
+      batch: {}
+      memory_limiter:
+        check_interval: 5s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+      resource:
+        attributes:
+        - key: k8s.cluster.name
+          action: upsert
+          value: demo-cluster
+        - key: service.instance.id
+          from_attribute: k8s.pod.uid
+          action: insert
+    connectors:
+      spanmetrics:
+        metrics_expiration: 5m
+        namespace: otel_span
+      routing/traces:
+        error_mode: ignore
+        table: 
+        - statement: route()
+          pipelines: [traces/sampling, traces/spanmetrics]
+    service:
+      extensions: [ health_check, bearertokenauth ]
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, resource]
+          exporters: [routing/traces]
+        traces/spanmetrics:
+          receivers: [routing/traces]
+          processors: []
+          exporters: [spanmetrics]
+        traces/sampling:
+          receivers: [routing/traces]
+          processors: [batch]
+          exporters: [debug, otlp/stackstate]
+        metrics:
+          receivers: [otlp, spanmetrics, prometheus]
+          processors: [memory_limiter, resource, batch]
+          exporters: [debug, otlp/stackstate]
+      telemetry:
+        metrics:
+          address: ${env:MY_POD_IP}:8888
