@@ -37,7 +37,11 @@ spec:
       otlp/stackstate:
         auth:
           authenticator: bearertokenauth
-        endpoint: https://<suse-observability>:443
+        endpoint: https://otlp-nightly-champagne.preprod.stackstate.io:443
+      otlphttp/stackstate:
+        auth:
+          authenticator: bearertokenauth
+        endpoint: https://otlp-http-nightly-champagne.preprod.stackstate.io:443
     processors:
       batch: {}
       memory_limiter:
@@ -75,11 +79,11 @@ spec:
         traces/sampling:
           receivers: [routing/traces]
           processors: [batch]
-          exporters: [debug, otlp/stackstate]
+          exporters: [debug, otlphttp/stackstate]
         metrics:
           receivers: [otlp, spanmetrics, prometheus]
           processors: [memory_limiter, resource, batch]
-          exporters: [debug, otlp/stackstate]
+          exporters: [debug, otlphttp/stackstate]
       telemetry:
         metrics:
           address: ${env:MY_POD_IP}:8888

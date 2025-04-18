@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: dice-roller
-        image: ghcr.io/rb3ckers/dice-roller-app
+        image: ghcr.io/rb3ckers/dice-roller-app:python
         ports:
         - containerPort: 5000
 ---
